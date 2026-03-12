@@ -51,4 +51,3 @@ Add your own widgets in Appearance → Widgets, or the theme will show default q
 
 = 1.0.0 =
 * Initial release
-```
