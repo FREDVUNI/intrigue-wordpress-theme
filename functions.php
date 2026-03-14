@@ -247,31 +247,75 @@ add_action('init', 'intrigue_register_portfolio');
 
 
 /**
+ * Handle Contact Form Submission
+ */
+function intrigue_handle_contact_form()
+{
+    if (isset($_POST['contact_nonce']) && wp_verify_nonce($_POST['contact_nonce'], 'contact_form_nonce')) {
+
+        $name    = sanitize_text_field($_POST['name']);
+        $email   = sanitize_email($_POST['email']);
+        $subject = sanitize_text_field($_POST['subject']);
+        $message = sanitize_textarea_field($_POST['message']);
+
+        $to = get_theme_mod('contact_email', get_option('admin_email'));
+        $email_subject = sprintf(__('New Contact Form Message from %s', 'intrigue'), $name);
+
+        $body = sprintf(
+            "Name: %s\nEmail: %s\nSubject: %s\n\nMessage:\n%s",
+            $name,
+            $email,
+            $subject,
+            $message
+        );
+
+        $headers = ['Content-Type: text/plain; charset=UTF-8'];
+
+        if (wp_mail($to, $email_subject, $body, $headers)) {
+            wp_redirect(add_query_arg('contact_sent', 'success', wp_get_referer()));
+        } else {
+            wp_redirect(add_query_arg('contact_sent', 'error', wp_get_referer()));
+        }
+        exit;
+    }
+}
+add_action('admin_post_submit_contact_form', 'intrigue_handle_contact_form');
+add_action('admin_post_nopriv_submit_contact_form', 'intrigue_handle_contact_form');
+
+/**
  * Handle Quote Form Submission
  */
 function intrigue_handle_quote_form()
 {
     if (isset($_POST['quote_nonce']) && wp_verify_nonce($_POST['quote_nonce'], 'quote_request_nonce')) {
 
-        $name    = sanitize_text_field($_POST['name']);
-        $email   = sanitize_email($_POST['email']);
-        $type    = sanitize_text_field($_POST['project_type']);
-        $budget  = sanitize_text_field($_POST['budget']);
-        $message = sanitize_textarea_field($_POST['message']);
+        $name        = sanitize_text_field($_POST['name']);
+        $email       = sanitize_email($_POST['email']);
+        $phone       = sanitize_text_field($_POST['phone']);
+        $company     = sanitize_text_field($_POST['company']);
+        $project_type = sanitize_text_field($_POST['project_type']);
+        $budget      = sanitize_text_field($_POST['budget']);
+        $timeline    = sanitize_text_field($_POST['timeline']);
+        $message     = sanitize_textarea_field($_POST['message']);
 
         $to = get_theme_mod('contact_email', get_option('admin_email'));
         $subject = sprintf(__('New Quote Request from %s', 'intrigue'), $name);
 
         $body = sprintf(
-            "Name: %s\nEmail: %s\nProject Type: %s\nBudget: %s\n\nMessage:\n%s",
+            "Name: %s\nEmail: %s\nPhone: %s\nCompany: %s\n\n" .
+                "Project Type: %s\nBudget: %s\nTimeline: %s\n\n" .
+                "Message:\n%s",
             $name,
             $email,
-            $type,
+            $phone,
+            $company,
+            $project_type,
             $budget,
+            $timeline,
             $message
         );
 
-        $headers = array('Content-Type: text/plain; charset=UTF-8');
+        $headers = ['Content-Type: text/plain; charset=UTF-8'];
 
         if (wp_mail($to, $subject, $body, $headers)) {
             wp_redirect(add_query_arg('quote_sent', 'success', wp_get_referer()));
@@ -281,7 +325,8 @@ function intrigue_handle_quote_form()
         exit;
     }
 }
-add_action('init', 'intrigue_handle_quote_form');
+add_action('admin_post_submit_quote_form', 'intrigue_handle_quote_form');
+add_action('admin_post_nopriv_submit_quote_form', 'intrigue_handle_quote_form');
 
 /**
  * Footer Customizer Settings
@@ -344,4 +389,57 @@ function intrigue_footer_customizer($wp_customize)
 }
 add_action('customize_register', 'intrigue_footer_customizer');
 
+/**
+ * Tell WordPress to look for page templates in the page-templates folder
+ */
+function intrigue_page_templates($template)
+{
+    if (is_page()) {
+        $page_template = get_post_meta(get_the_ID(), '_wp_page_template', true);
 
+        // Debug - remove after fixing
+        if (current_user_can('administrator')) {
+            echo "<!-- Template selected: " . $page_template . " -->";
+        }
+
+        // If using a custom template
+        if ($page_template && $page_template !== 'default') {
+            // Try direct path first
+            $template_path = get_template_directory() . '/' . $page_template;
+            if (file_exists($template_path)) {
+                return $template_path;
+            }
+
+            // Try page-templates folder
+            $template_path = get_template_directory() . '/page-templates/' . basename($page_template);
+            if (file_exists($template_path)) {
+                return $template_path;
+            }
+        }
+    }
+
+    return $template;
+}
+add_filter('template_include', 'intrigue_page_templates', 99);
+
+/**
+ * Register page templates from the page-templates folder
+ */
+function intrigue_register_page_templates($templates)
+{
+    // Get all PHP files in the page-templates folder
+    $template_files = glob(get_template_directory() . '/page-templates/*.php');
+
+    foreach ($template_files as $file) {
+        // Get the template name from the file header
+        $file_data = get_file_data($file, array('Template Name' => 'Template Name'));
+
+        if (!empty($file_data['Template Name'])) {
+            // Use just the filename as the key (not the full path)
+            $templates[basename($file)] = $file_data['Template Name'];
+        }
+    }
+
+    return $templates;
+}
+add_filter('theme_page_templates', 'intrigue_register_page_templates');
