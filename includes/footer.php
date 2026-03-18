@@ -153,22 +153,6 @@
                     ));
                     ?>
                 </div>
-
-                <div class="footer-credits">
-                    <?php
-                    printf(
-                        esc_html__('Powered by %s', 'intrigue'),
-                        '<a href="https://wordpress.org/" rel="nofollow">WordPress</a>'
-                    );
-                    ?>
-                    <span class="sep"> | </span>
-                    <?php
-                    printf(
-                        esc_html__('Theme: %s', 'intrigue'),
-                        '<a href="' . esc_url('https://fredvuni.netlify.app/') . '">Intrigue</a>'
-                    );
-                    ?>
-                </div>
             </div>
         </div>
     </div><!-- .footer-bottom -->
