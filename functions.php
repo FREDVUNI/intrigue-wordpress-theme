@@ -67,6 +67,9 @@ function intrigue_scripts()
     // Main stylesheet
     wp_enqueue_style('intrigue-main', get_stylesheet_uri(), array(), wp_get_theme()->get('Version'));
 
+    // Font Awesome
+    wp_enqueue_style('font-awesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css', array(), '6.5.1');
+
     // JavaScript
     wp_enqueue_script('intrigue-navigation', get_template_directory_uri() . '/assets/js/navigation.js', array(), wp_get_theme()->get('Version'), true);
     wp_enqueue_script('intrigue-theme-toggle', get_template_directory_uri() . '/assets/js/theme-toggle.js', array(), wp_get_theme()->get('Version'), true);
@@ -74,6 +77,11 @@ function intrigue_scripts()
     // Add this to your intrigue_scripts() function
     if (is_front_page()) {
         wp_enqueue_script('intrigue-front-page', get_template_directory_uri() . '/assets/js/front-page.js', array(), wp_get_theme()->get('Version'), true);
+    }
+
+    // Add to your intrigue_scripts() function
+    if (is_single()) {
+        wp_enqueue_script('intrigue-single', get_template_directory_uri() . '/assets/js/single-post.js', array(), wp_get_theme()->get('Version'), true);
     }
 }
 
